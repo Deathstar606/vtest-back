@@ -35,7 +35,7 @@ const corsOptions = {
       "https://sandbox.sslcommerz.com",
       "null"
     ];
-
+    
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
