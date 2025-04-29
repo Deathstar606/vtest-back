@@ -32,7 +32,7 @@ const corsOptions = {
     const allowedOrigins = [
       "https://deathstar606.github.io",
       "http://localhost:3000",
-      "https://vtest-back.vercel.app/",
+      "https://sandbox.sslcommerz.com",
       "null"
     ];
 
