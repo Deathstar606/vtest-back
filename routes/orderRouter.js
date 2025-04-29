@@ -35,7 +35,7 @@ orderRouter.route('/')
         total_amount: order.total,
         currency: 'BDT',
         tran_id: trans_id,
-        success_url: `https://vtest-back-tan.vercel.app/orders/success/${trans_id}/${item}`, //http://localhost:9000/
+        success_url: `https://vtest-back.vercel.app/orders/success/${trans_id}/${item}`, //http://localhost:9000/
         fail_url: 'http://localhost:3030/fail',
         cancel_url: 'http://localhost:3030/cancel',
         ipn_url: 'http://localhost:3030/ipn',
