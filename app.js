@@ -29,18 +29,20 @@ connect.then((db) => {
 
 const corsOptions = {
   origin: (origin, callback) => {
-    const allowedOrigins = ["https://deathstar606.github.io", "http://localhost:3000", "https://vtest-back.vercel.app/", "null"];
-
-    // Log actual value of origin to help debug
-    console.log("Request received from origin:", origin);
+    const allowedOrigins = [
+      "https://deathstar606.github.io",
+      "http://localhost:3000",
+      "https://vtest-back.vercel.app/",
+      "null"
+    ];
 
     if (!origin || allowedOrigins.includes(origin)) {
-      // Allow if origin is undefined (like curl, Postman), or matches
-      console.log("✅ Allowed origin:", origin);
       callback(null, true);
     } else {
-      console.log("❌ Denied origin:", origin);
-      callback(new Error("Not allowed by CORS", origin));
+      // Instead of just returning a generic error, attach the origin info
+      const error = new Error(`Not allowed by CORS: ${origin}`);
+      error.status = 403; // Optional: let your error handler send the right status
+      callback(error);
     }
   },
   credentials: true,
