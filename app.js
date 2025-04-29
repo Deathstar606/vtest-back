@@ -29,7 +29,7 @@ connect.then((db) => {
 
 const corsOptions = {
   origin: (origin, callback) => {
-    const allowedOrigins = ["https://deathstar606.github.io", "http://localhost:3000", "null"];
+    const allowedOrigins = ["https://deathstar606.github.io", "http://localhost:3000", "https://vtest-back.vercel.app/", "null"];
 
     // Log actual value of origin to help debug
     console.log("Request received from origin:", origin);
