@@ -35,7 +35,7 @@ orderRouter.route('/')
         total_amount: order.total,
         currency: 'BDT',
         tran_id: trans_id,
-        success_url: `http://localhost:9000/orders/success/${trans_id}/${item}`, //http://localhost:9000/
+        success_url: `https://vtest-back.vercel.app/orders/success/${trans_id}/${item}`, //http://localhost:9000/
         fail_url: 'http://localhost:3030/fail',
         cancel_url: 'http://localhost:3030/cancel',
         ipn_url: 'http://localhost:3030/ipn',
@@ -148,7 +148,7 @@ orderRouter.route('/success/:tranId/:items')
     }
 
     // Final redirect
-    res.redirect(`http://localhost:3000/Veloura#/home/paystat/${transactionId}`);
+    res.redirect(`https://deathstar606.github.io/vtest-front/#/home/paystat/${transactionId}`);
   } catch (err) {
     console.error("Error processing payment success callback:", err);
     next(err);
