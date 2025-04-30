@@ -3,9 +3,11 @@ var path = require('path');
 var logger = require('morgan');
 var passport = require('passport');
 var bodyParser = require('body-parser');
-var config = require('./config');
+//var config = require('./config');
 const cors = require('cors');
 require('dotenv').config();
+
+const connectToDatabase = require('./utils/db'); // adjust path
 
 var index = require('./routes/index');
 var users = require('./routes/users');
@@ -16,16 +18,14 @@ const mongoose = require('mongoose');
 
 mongoose.set('useCreateIndex', true);
 
-// Connection URL
-const url = config.mongoUrl;
-console.log(url)
-const connect = mongoose.connect(url, 
-  { useNewUrlParser: true, 
-    useUnifiedTopology: true });
- 
-connect.then((db) => {
-    console.log("Connection OK!");
-}, (err) => { console.log(err); });
+// Database connection
+(async () => {
+  try {
+    await connectToDatabase(); 
+  } catch (err) {
+    console.error('DB connection failed:', err);
+  }
+})();
 
 const corsOptions = {
   origin: (origin, callback) => {
