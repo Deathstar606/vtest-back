@@ -29,15 +29,14 @@ orderRouter.route('/')
 .post(cors.corsWithOptions, async (req, res, next) => {
   try {
     let order = req.body;
-    const item = encodeURIComponent(JSON.stringify(order.items))
     const trans_id = new mongoose.Types.ObjectId().toString();
     const data = {
         total_amount: order.total,
         currency: 'BDT',
         tran_id: trans_id,
-        success_url: `https://vtest-back.vercel.app/orders/success/${trans_id}/${item}`, //http://localhost:9000/
-        fail_url: 'http://localhost:3030/fail',
-        cancel_url: 'http://localhost:3030/cancel',
+        success_url: `https://vtest-back.vercel.app/orders/success/${trans_id}`, //http://localhost:9000/
+        fail_url: `https://vtest-back.vercel.app/orders/fail/${trans_id}`,
+        cancel_url: `https://vtest-back.vercel.app/cancle/${trans_id}`,
         ipn_url: 'http://localhost:3030/ipn',
         shipping_method: 'Courier',
         product_name: 'Computer',
@@ -67,15 +66,15 @@ orderRouter.route('/')
     let GatewayPageURL = apiResponse.GatewayPageURL;
     
     const finalOrder = {
-        firstName: order.firstName,
-        lastName: order.lastName,
-        address: order.address,
-        email: order.email,
-        phoneNumber: order.phoneNumber,
-        order_stat: order.order_stat,
-        total: order.total,
-        items: order.items,
-        transaction_id: trans_id
+      firstName: order.firstName,
+      lastName: order.lastName,
+      address: order.address,
+      email: order.email,
+      phoneNumber: order.phoneNumber,
+      order_stat: order.order_stat,
+      total: order.total,
+      items: order.items, 
+      transaction_id: trans_id
     };
     console.log('Redirecting to: ', GatewayPageURL);
 
@@ -88,34 +87,29 @@ orderRouter.route('/')
   }
 });
 
-orderRouter.route('/success/:tranId/:items')
+orderRouter.route('/success/:tranId')
 .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
 .post(cors.corsWithOptions, async (req, res, next) => {
   console.log("Payment success callback received");
 
   try {
     const transactionId = req.params.tranId;
-    const rawItems = req.params.items;
-    console.log("WTF are You", rawItems)
-    // Decode and parse the items array
-    const items = JSON.parse(decodeURIComponent(rawItems));
-    console.log("Parsed items:", items);
 
-    // Update payment status
-    const updatedOrder = await Order.findOneAndUpdate(
+    const order = await Order.findOneAndUpdate(
       { transaction_id: transactionId },
       { $set: { payment_stat: true } },
       { new: true }
     );
 
-    if (!updatedOrder) {
+    if (!order) {
       console.log("Transaction not found for ID:", transactionId);
       return res.status(404).json({ message: 'Transaction not found' });
     }
 
-    // Loop through all items and update stock & ordered count
+    const items = order.items;
+
     for (const item of items) {
-      const { category, _id: clothesId, size, quantity } = item;
+      const { category, _id, size, quantity } = item;
 
       const categoryDoc = await Cloth.findOne({ category });
       if (!categoryDoc) {
@@ -123,34 +117,61 @@ orderRouter.route('/success/:tranId/:items')
         continue;
       }
 
-      const clothingItem = categoryDoc.items.id(clothesId);
+      const clothingItem = categoryDoc.items.id(_id);
       if (!clothingItem) {
-        console.log(`Clothing item with ID '${clothesId}' not found in category '${category}'`);
+        console.log(`Clothing item with ID '${_id}' not found`);
         continue;
       }
 
-      // Ensure size exists
       if (!clothingItem.size || !clothingItem.size.has(size)) {
-        console.log(`Size '${size}' not found in item '${clothesId}'`);
+        console.log(`Size '${size}' not found in item '${_id}'`);
         continue;
       }
 
-      // Decrement quantity for the specific size
       const currentQty = clothingItem.size.get(size);
       clothingItem.size.set(size, Math.max(0, currentQty - quantity));
-
-      // Increment ordered field
       clothingItem.ordered = (clothingItem.ordered || 0) + quantity;
 
-      // Save the updated document
       await categoryDoc.save();
-      console.log("every Update has been completed")
     }
 
-    // Final redirect
-    res.redirect(`https://deathstar606.github.io/vtest-front/#/home/paystat/${transactionId}`);
+    res.redirect(`http://Deathstar606.github.io/vtest-front/#/home/paystat/${transactionId}`);
   } catch (err) {
     console.error("Error processing payment success callback:", err);
+    next(err);
+  }
+});
+
+orderRouter.route('/fail/:tranId')
+.options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
+.post(cors.corsWithOptions, async (req, res, next) => {
+  try {
+    const transactionId = req.params.tranId;
+
+    // Optionally remove the order if payment failed
+    await Order.findOneAndDelete({ transaction_id: transactionId });
+    console.log("deleted Successfully")
+    // Redirect user to failure page on frontend
+    res.redirect(`http://Deathstar606.github.io/vtest-front/#/home/failure/${transactionId}`);
+  } catch (err) {
+    console.error("Error handling payment failure:", err);
+    next(err);
+  }
+});
+
+orderRouter.route('/cancle/:tranId')
+.options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
+.post(cors.corsWithOptions, async (req, res, next) => {
+  try {
+    const transactionId = req.params.tranId;
+
+    // Optionally remove the order if payment failed
+    await Order.findOneAndDelete({ transaction_id: transactionId });
+    console.log("deleted Successfully")
+    // Redirect user to failure page on frontend
+    res.redirect(`http://Deathstar606.github.io/vtest-front/#/home/cancle/${transactionId}`);
+  } catch (err) {
+    console.error("Error handling payment failure:", err);
     next(err);
   }
 });
