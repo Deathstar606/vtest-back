@@ -1,11 +1,14 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const axios = require('axios');
 const mongoose = require('mongoose');
 const SSLCommerzPayment = require('sslcommerz-lts');
 const cors = require('./cors');
 
 const Order = require('../models/order'); // adjust path as needed
 const Cloth = require("../models/clothes")
+
+const { generateEmailHtml } = require('../utils/emailTemplate');
 
 const orderRouter = express.Router();
 var authenticate = require('../authenticate');
@@ -34,7 +37,7 @@ orderRouter.route('/')
         total_amount: order.total,
         currency: 'BDT',
         tran_id: trans_id,
-        success_url: `https://vtest-back.vercel.app/orders/success/${trans_id}`, //http://localhost:9000/
+        success_url: `http://localhost:9000/orders/success/${trans_id}`, //https://vtest-back.vercel.app/
         fail_url: `https://vtest-back.vercel.app/orders/fail/${trans_id}`,
         cancel_url: `https://vtest-back.vercel.app/cancle/${trans_id}`,
         ipn_url: 'http://localhost:3030/ipn',
@@ -135,7 +138,21 @@ orderRouter.route('/success/:tranId')
       await categoryDoc.save();
     }
 
-    res.redirect(`http://Deathstar606.github.io/vtest-front/#/home/paystat/${transactionId}`);
+    // Send email after successful processing
+    const htmlContent = generateEmailHtml(
+      order.firstName,
+      "Your order has been confirmed!",
+      items.map(({ name, category, _id }) => ({ name, category, _id }))
+    );
+
+    await axios.post("http://localhost:9000/mail", {
+      subject: "Order Confirmation",
+      htmlContent,
+      email: order.email,
+      message: `Order ${transactionId} has been confirmed.`
+    });
+    console.log("yes")
+    res.redirect(`http://localhost:3000/Veloura#/home/paystat/${transactionId}`);
   } catch (err) {
     console.error("Error processing payment success callback:", err);
     next(err);

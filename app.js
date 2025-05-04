@@ -13,6 +13,8 @@ var index = require('./routes/index');
 var users = require('./routes/users');
 var cloth = require('./routes/clothesRouter')
 var order = require('./routes/orderRouter')
+var voucher = require('./routes/voucherRouter')
+var mail = require("./routes/mailRouter")
 
 const mongoose = require('mongoose');
 
@@ -66,6 +68,8 @@ app.use('/', index);
 app.use('/users', users);
 app.use('/clothes', cloth);
 app.use('/orders', order);
+app.use("/mail", mail);
+app.use("/voucher", voucher);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
