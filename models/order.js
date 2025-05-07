@@ -21,7 +21,8 @@ const orderSchema = new mongoose.Schema({
   order_stat:{ type: String, default: "" },
   transaction_id: { type: String, required: true },
   items: [orderItemSchema],
-  total: { type: Number, required: true }
+  total: { type: Number, required: true },
+  delivery: { type: Number, required: true }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Order', orderSchema);
