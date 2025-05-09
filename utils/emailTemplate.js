@@ -1,6 +1,7 @@
 // utils/emailTemplate.js
 const React = require("react");
 const { renderToStaticMarkup } = require("react-dom/server");
+const { frontend } = require("../baseUrl");
 
 const Email = ({ name, message, items }) => {
   return React.createElement("div", { style: { backgroundColor: "#ffffff", padding: "20px", borderRadius: "5px" } },
@@ -10,7 +11,7 @@ const Email = ({ name, message, items }) => {
       React.createElement("div", { key: item._id, style: { textAlign: "center", margin: "10px" } },
         React.createElement("p", null, item.name),
         React.createElement("a", {
-          href: `http://localhost:3000/Veloura#/home/${item.category}/${item._id}`,
+          href: `${frontend}Veloura#/home/${item.category}/${item._id}`,
           style: {
             display: 'inline-block',
             padding: '10px 20px',

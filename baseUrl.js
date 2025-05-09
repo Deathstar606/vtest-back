@@ -1,6 +1,6 @@
 const baseUrls = {
-    frontend: 'http://localhost:3000/',
-    backend: 'http://localhost:9000/',
+    frontend: 'https://vtest-front.vercel.app/',
+    backend: 'https://vtest-back.vercel.app/',
   };
   
 module.exports = baseUrls;
