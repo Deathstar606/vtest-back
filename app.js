@@ -35,7 +35,10 @@ const corsOptions = {
       "https://deathstar606.github.io",
       "http://localhost:3000",
       "https://sandbox.sslcommerz.com",
-      "null"
+      "null",
+      "https://velourabd.com",
+      "https://www.velourabd.com",
+      "https://veloura-staging.vercel.app", // optional, if you have a staging frontend
     ];
     
     if (!origin || allowedOrigins.includes(origin)) {
