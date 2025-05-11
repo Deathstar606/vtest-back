@@ -149,9 +149,15 @@ orderRouter.route('/success/:tranId')
     const htmlContent = generateEmailHtml(
       order.firstName,
       "Your order has been confirmed!",
-      items.map(({ name, category, _id }) => ({ name, category, _id }))
+      order.items,
+      order.phoneNumber,
+      order.address,
+      order.order_stat,
+      order.delivery,
+      order.total,
+      order.transaction_id,
     );
-
+    console.log("ready to send")
     await axios.post(`${backend}mail`, {
       subject: "Order Confirmation",
       htmlContent,
@@ -257,11 +263,18 @@ orderRouter.route('/cod').post(async (req, res, next) => {
 
       await categoryDoc.save();
     }
-
+    
     const htmlContent = generateEmailHtml(
+/*       savedOrder.transaction_id, */
       savedOrder.firstName,
       "Your order has been confirmed!",
-      items.map(({ name, category, _id }) => ({ name, category, _id }))
+      savedOrder.items,
+      savedOrder.phoneNumber,
+      savedOrder.address,
+      savedOrder.order_stat,
+      savedOrder.delivery,
+      savedOrder.total,
+      savedOrder.transaction_id,
     );
 
     await axios.post(`${backend}mail`, {
