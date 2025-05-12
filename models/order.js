@@ -22,7 +22,8 @@ const orderSchema = new mongoose.Schema({
   transaction_id: { type: String, required: true },
   items: [orderItemSchema],
   total: { type: Number, required: true },
-  delivery: { type: Number, required: true }
+  delivery: { type: Number, required: true },
+  completion:{ type: Boolean, default: false }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Order', orderSchema);

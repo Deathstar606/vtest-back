@@ -206,6 +206,48 @@ orderRouter.route('/cancle/:tranId')
   }
 });
 
+orderRouter.route('/delete/:tranId')
+.options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
+.post(cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
+  try {
+    const transactionId = req.params.tranId;
+
+    // Optionally remove the order if payment failed
+    await Order.findOneAndDelete({ transaction_id: transactionId });
+    console.log("deleted Successfully")
+  } catch (err) {
+    console.error("Error deleting order:", err);
+    next(err);
+  }
+});
+
+orderRouter.route('/colmplete/:tranId')
+  .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
+  .post(cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
+    try {
+      const transactionId = req.params.tranId;
+
+      const order = await Order.findOne({ transaction_id: transactionId });
+
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      order.completion = !order.completion;
+      await order.save();
+
+      console.log("Order completion status toggled successfully");
+      res.status(200).json({
+        message: "Order completion status updated",
+        completion: order.completion,
+      });
+
+    } catch (err) {
+      console.error("Error updating order completion:", err);
+      next(err);
+    }
+});
+
 orderRouter.route('/cod').post(async (req, res, next) => {
   try {
     const order = req.body;
