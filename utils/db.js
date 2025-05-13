@@ -8,21 +8,17 @@ if (!MONGODB_URI) {
 }
 
 let cached = global.mongoose;
-
 if (!cached) {
   cached = global.mongoose = { conn: null, promise: null };
 }
 
 async function connectToDatabase() {
-  if (cached.conn) {
-    return cached.conn;
-  }
-
+  if (cached.conn) return cached.conn;
   if (!cached.promise) {
-    mongoose.set('strictQuery', false);
     cached.promise = mongoose.connect(MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000, // 💡 fail fast if DB is unreachable
     }).then((mongoose) => {
       console.log("MongoDB connected successfully");
       return mongoose;
@@ -31,7 +27,6 @@ async function connectToDatabase() {
       throw err;
     });
   }
-
   cached.conn = await cached.promise;
   return cached.conn;
 }

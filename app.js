@@ -1,33 +1,25 @@
-var express = require('express');
-var path = require('path');
-var logger = require('morgan');
-var passport = require('passport');
-var bodyParser = require('body-parser');
-//var config = require('./config');
+const express = require('express');
+const path = require('path');
+const logger = require('morgan');
+const passport = require('passport');
+const bodyParser = require('body-parser');
 const cors = require('cors');
 require('dotenv').config();
 
-const connectToDatabase = require('./utils/db'); // adjust path
-
-var index = require('./routes/index');
-var users = require('./routes/users');
-var cloth = require('./routes/clothesRouter')
-var order = require('./routes/orderRouter')
-var voucher = require('./routes/voucherRouter')
-var mail = require("./routes/mailRouter")
-
+const connectToDatabase = require('./utils/db');
 const mongoose = require('mongoose');
 
+// Optional but recommended
 mongoose.set('useCreateIndex', true);
+mongoose.set('strictQuery', false);
+mongoose.set('bufferCommands', false); // 💡 prevent buffering when disconnected
 
-// Database connection
-(async () => {
-  try {
-    await connectToDatabase(); 
-  } catch (err) {
-    console.error('DB connection failed:', err);
-  }
-})();
+const index = require('./routes/index');
+const users = require('./routes/users');
+const cloth = require('./routes/clothesRouter');
+const order = require('./routes/orderRouter');
+const voucher = require('./routes/voucherRouter');
+const mail = require('./routes/mailRouter');
 
 const corsOptions = {
   origin: (origin, callback) => {
@@ -39,15 +31,13 @@ const corsOptions = {
       "null",
       "https://velourabd.com",
       "https://www.velourabd.com",
-      "https://veloura-staging.vercel.app", // optional, if you have a staging frontend
+      "https://veloura-staging.vercel.app",
     ];
-    
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      // Instead of just returning a generic error, attach the origin info
       const error = new Error(`Not allowed by CORS: ${origin}`);
-      error.status = 403; // Optional: let your error handler send the right status
+      error.status = 403;
       callback(error);
     }
   },
@@ -55,58 +45,63 @@ const corsOptions = {
   optionsSuccessStatus: 200,
 };
 
-var app = express();
+const app = express();
 
 app.use(cors(corsOptions));
-
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
-
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-
 app.use(passport.initialize());
+
+// ✅ Ensure DB connection before handling requests
+app.use(async (req, res, next) => {
+  try {
+    await connectToDatabase();
+    next();
+  } catch (err) {
+    console.error('Error connecting to DB:', err);
+    res.status(500).json({ error: 'Database connection error' });
+  }
+});
 
 app.use('/', index);
 app.use('/users', users);
 app.use('/clothes', cloth);
 app.use('/orders', order);
-app.use("/mail", mail);
-app.use("/voucher", voucher);
-
+app.use('/mail', mail);
+app.use('/voucher', voucher);
 app.use(express.static(path.join(__dirname, 'public')));
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  var err = new Error('Not Found');
+// Catch 404
+app.use(function (req, res, next) {
+  const err = new Error('Not Found');
   err.status = 404;
   next(err);
 });
 
-// error handler
-app.use(function(err, req, res, next) {
-  // log the error stack for debugging
+// Error handler
+app.use(function (err, req, res, next) {
   console.error(err.stack);
-
-  // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
   res.status(err.status || 500);
   res.render('error', {
-    title: 'Error', // Ensure 'title' is defined
+    title: 'Error',
     message: err.message,
     error: err
   });
 });
 
-const http = require('http');
-const server = http.createServer(app);
-server.setTimeout(10000); // 10 seconds
-server.listen(process.env.PORT || 9000, () => {
-  console.log('Server listening on port', process.env.PORT || 9000);
-});
+// Start server (used locally only — not needed for Vercel)
+if (!process.env.VERCEL) {
+  const http = require('http');
+  const server = http.createServer(app);
+  server.setTimeout(10000);
+  server.listen(process.env.PORT || 9000, () => {
+    console.log('Server listening on port', process.env.PORT || 9000);
+  });
+}
 
 module.exports = app;
