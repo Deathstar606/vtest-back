@@ -15,9 +15,9 @@ const { generateEmailHtml } = require('../utils/emailTemplate');
 const orderRouter = express.Router();
 var authenticate = require('../authenticate');
 
-const store_id = "demo667d30040fbc3";
-const store_passwd = "demo667d30040fbc3@ssl";
-const is_live = false;
+const store_id = "velourabd0live";
+const store_passwd = "6819B22E3AC1214330";
+const is_live = true;
 
 orderRouter.use(bodyParser.json());
 
@@ -32,6 +32,7 @@ orderRouter.route('/')
     }
 })
 .post(cors.corsWithOptions, async (req, res, next) => {
+  console.log("Order request received");
   try {
     let order = req.body;
     const trans_id = new mongoose.Types.ObjectId().toString();
@@ -46,8 +47,8 @@ orderRouter.route('/')
       tran_id: trans_id,
       success_url: `${backend}orders/success/${trans_id}`, // change for production
       fail_url: `${backend}orders/fail/${trans_id}`,
-      cancel_url: `${backend}cancle/${trans_id}`,
-      ipn_url: 'http://localhost:3030/ipn',
+      cancel_url: `${backend}orders/cancle/${trans_id}`,
+      ipn_url: `${backend}orders/ipn`,
       shipping_method: 'Courier',
       product_name: 'Computer',
       product_category: 'Electronic',
@@ -87,7 +88,6 @@ orderRouter.route('/')
       items: order.items,
       transaction_id: trans_id
     };
-
     console.log('Redirecting to: ', GatewayPageURL);
     await Order.create(finalOrder);
     res.send({ url: GatewayPageURL });
@@ -206,20 +206,43 @@ orderRouter.route('/cancle/:tranId')
   }
 });
 
-orderRouter.route('/delete/:tranId')
+orderRouter.route('/ipn')
 .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
-.post(cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
+.post(cors.corsWithOptions, async (req, res, next) => {
   try {
-    const transactionId = req.params.tranId;
+    const ipnData = req.body;
 
-    // Optionally remove the order if payment failed
-    await Order.findOneAndDelete({ transaction_id: transactionId });
-    console.log("deleted Successfully")
+    // Optional: Log or store the raw IPN data
+    console.log("IPN Data Received:", ipnData);
+
+    // Step 1: Validate the IPN by calling the SSLCommerz validation API
+    const validationURL = `https://securepay.sslcommerz.com/validator/api/validationserverAPI.php?val_id=${ipnData.val_id}&store_id=${store_id}&store_passwd=${store_passwd}&v=1&format=json`;
+
+    const validationRes = await fetch(validationURL);
+    const validationData = await validationRes.json();
+
+    console.log("Validated IPN:", validationData);
+
+    if (
+      validationData.status === "VALID" &&
+      validationData.risk_level === "0"
+    ) {
+      // Update order in DB to reflect successful payment
+      await Order.findOneAndUpdate(
+        { transaction_id: validationData.tran_id },
+        { payment_stat: true },
+      );
+
+      return res.status(200).send("IPN processed successfully.");
+    }
+
+    return res.status(400).send("IPN validation failed.");
   } catch (err) {
-    console.error("Error deleting order:", err);
-    next(err);
+    console.error("Error handling IPN:", err);
+    res.status(500).send("Server error while handling IPN");
   }
 });
+
 
 orderRouter.route('/colmplete/:tranId')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
@@ -246,6 +269,26 @@ orderRouter.route('/colmplete/:tranId')
       console.error("Error updating order completion:", err);
       next(err);
     }
+});
+
+orderRouter.route('/delete/:tranId')
+.options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
+.post(cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
+  try {
+    const transactionId = req.params.tranId;
+
+    const deletedOrder = await Order.findOneAndDelete({ transaction_id: transactionId });
+
+    if (!deletedOrder) {
+      return res.status(404).json({ success: false, message: "Order not found." });
+    }
+
+    console.log("Deleted successfully");
+    res.status(200).json({ success: true, message: "Order deleted successfully refresh please." });
+  } catch (err) {
+    console.error("Error deleting order:", err);
+    res.status(500).json({ success: false, message: "Server error while deleting order." });
+  }
 });
 
 orderRouter.route('/cod').post(async (req, res, next) => {
