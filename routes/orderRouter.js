@@ -179,6 +179,7 @@ orderRouter.route('/success/:tranId')
 orderRouter.route('/fail/:tranId')
 .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
 .post(cors.corsWithOptions, async (req, res, next) => {
+  console.log("Payment failure callback received");
   try {
     const transactionId = req.params.tranId;
 
@@ -196,6 +197,7 @@ orderRouter.route('/fail/:tranId')
 orderRouter.route('/cancle/:tranId')
 .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
 .post(cors.corsWithOptions, async (req, res, next) => {
+    console.log("Payment cancle callback received");
   try {
     const transactionId = req.params.tranId;
 
@@ -352,7 +354,7 @@ orderRouter.route('/cod').post(async (req, res, next) => {
 
       await categoryDoc.save();
     }
-    
+
     const htmlContent = generateEmailHtml(
 /*       savedOrder.transaction_id, */
       savedOrder.firstName,

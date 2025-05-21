@@ -3,7 +3,6 @@ const { renderToStaticMarkup } = require("react-dom/server");
 const { frontend } = require("../baseUrl");
 
 const Email = ({ name, message, items, phoneNumber, address, order_stat, delivery, total, transaction_id }) => {
-  console.log("items: ", items)
   return React.createElement("div", {
     style: {
       backgroundColor: "#ffffff",
@@ -83,7 +82,7 @@ const Email = ({ name, message, items, phoneNumber, address, order_stat, deliver
   );
 };
 
-const generateEmailHtml = (name, message, items, phoneNumber, address, order_stat, delivery, total) => {
+const generateEmailHtml = (name, message, items, phoneNumber, address, order_stat, delivery, total, transaction_id) => {
   const html = renderToStaticMarkup(
     React.createElement(Email, {
       name,
@@ -93,7 +92,8 @@ const generateEmailHtml = (name, message, items, phoneNumber, address, order_sta
       address,
       order_stat,
       delivery,
-      total
+      total,
+      transaction_id
     })
   );
   return `<!DOCTYPE html><html><body>${html}</body></html>`;
