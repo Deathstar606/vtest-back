@@ -15,8 +15,8 @@ const { generateEmailHtml } = require('../utils/emailTemplate');
 const orderRouter = express.Router();
 var authenticate = require('../authenticate');
 
-const store_id = "velourabd0live";
-const store_passwd = "6819B22E3AC1214330";
+const store_id = process.env.STORE_ID;
+const store_passwd = process.env.STORE_PASSWD;
 const is_live = true;
 
 orderRouter.use(bodyParser.json());
@@ -24,12 +24,16 @@ orderRouter.use(bodyParser.json());
 orderRouter.route('/')
 .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
 .get(cors.cors, authenticate.verifyUser, async (req, res, next) => {
-    try {
-      const orders = await Order.find(req.query)
-      res.status(200).json(orders);
-    } catch (error) {
-      next(error);
-    }
+  try {
+    // Remove orders with order_stat "online" and payment_stat false
+    await Order.deleteMany({ order_stat: "online", payment_stat: false });
+
+    // Fetch remaining orders based on request query
+    const orders = await Order.find(req.query);
+    res.status(200).json(orders);
+  } catch (error) {
+    next(error);
+  }
 })
 .post(cors.corsWithOptions, async (req, res, next) => {
   console.log("Order request received");

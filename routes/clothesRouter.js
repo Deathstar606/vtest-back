@@ -6,12 +6,6 @@ const cors = require('./cors');
 const Clothes = require('../models/clothes');
 var authenticate = require('../authenticate');
 
-/* cloudinary.config({
-  cloud_name: "dmrazifyy",
-  api_key: "558929873675875",
-  api_secret: "tSFF2tpHoBjAvhPNQeWzY0GwA9Q"
-}); */
-
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
