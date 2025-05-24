@@ -27,7 +27,7 @@ const corsOptions = {
       "https://deathstar606.github.io",
       "https://vtest-front.vercel.app",
       "http://localhost:3000",
-      "https://sandbox.sslcommerz.com",
+      "https://securepay.sslcommerz.com",
       "null",
       "https://velourabd.com",
       "https://www.velourabd.com",

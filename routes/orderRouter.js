@@ -49,7 +49,7 @@ orderRouter.route('/')
       total_amount: amountToCharge,
       currency: 'BDT',
       tran_id: trans_id,
-      success_url: `${backend}orders/success/${trans_id}`, // change for production
+      success_url: `${backend}orders/success/${trans_id}`,
       fail_url: `${backend}orders/fail/${trans_id}`,
       cancel_url: `${backend}orders/cancle/${trans_id}`,
       ipn_url: `${backend}orders/ipn`,
@@ -197,7 +197,7 @@ orderRouter.route('/fail/:tranId')
 orderRouter.route('/cancle/:tranId')
 .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
 .post(cors.corsWithOptions, async (req, res, next) => {
-    console.log("Payment cancle callback received");
+  console.log("Payment cancle callback received");
   try {
     const transactionId = req.params.tranId;
 
@@ -218,10 +218,8 @@ orderRouter.route('/ipn')
   try {
     const ipnData = req.body;
 
-    // Optional: Log or store the raw IPN data
     console.log("IPN Data Received:", ipnData);
 
-    // Step 1: Validate the IPN by calling the SSLCommerz validation API
     const validationURL = `https://securepay.sslcommerz.com/validator/api/validationserverAPI.php?val_id=${ipnData.val_id}&store_id=${store_id}&store_passwd=${store_passwd}&v=1&format=json`;
 
     const validationRes = await fetch(validationURL);
@@ -233,7 +231,7 @@ orderRouter.route('/ipn')
       validationData.status === "VALID" &&
       validationData.risk_level === "0"
     ) {
-      // Update order in DB to reflect successful payment
+
       await Order.findOneAndUpdate(
         { transaction_id: validationData.tran_id },
         { payment_stat: true },
