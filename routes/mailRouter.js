@@ -15,13 +15,13 @@ mailRouter.post('/', async (req, res) => {
     port: 465,
     secure: true, // Use `true` for port 465
     auth: {
-      user: "dsfardin606@gmail.com",
-      pass: "mmci qyfw zkny mnmt",
+      user: "velourabd.online@gmail.com",
+      pass: "rgwm yekr gypa qtdq",
     },
   });
 
   const mailOptionsUser = {
-    from: 'dsfardin606@gmail.com', // sender address
+    from: 'velourabd.online@gmail.com', // sender address
     to: email, // recipient
     subject: subject,
     html: htmlContent
@@ -29,8 +29,8 @@ mailRouter.post('/', async (req, res) => {
 
   const mailOptionsAdmin = {
     from: email, // sender is the user
-    to: 'dsfardin606@gmail.com', // admin email
-    subject: 'Message From Website',
+    to: 'velourabd.online@gmail.com', // admin email
+    subject: 'An Order Has Been Made',
     text: message
   };
 

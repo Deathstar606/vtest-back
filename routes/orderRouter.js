@@ -217,25 +217,75 @@ orderRouter.route('/ipn')
 .post(cors.corsWithOptions, async (req, res, next) => {
   try {
     const ipnData = req.body;
-
     console.log("IPN Data Received:", ipnData);
 
     const validationURL = `https://securepay.sslcommerz.com/validator/api/validationserverAPI.php?val_id=${ipnData.val_id}&store_id=${store_id}&store_passwd=${store_passwd}&v=1&format=json`;
 
     const validationRes = await fetch(validationURL);
     const validationData = await validationRes.json();
-
     console.log("Validated IPN:", validationData);
 
     if (
       validationData.status === "VALID" &&
       validationData.risk_level === "0"
     ) {
+      const order = await Order.findOne({ transaction_id: validationData.tran_id });
 
-      await Order.findOneAndUpdate(
-        { transaction_id: validationData.tran_id },
-        { payment_stat: true },
+      if (!order) {
+        console.warn(`Order with transaction ID ${validationData.tran_id} not found.`);
+        return res.status(404).send("Order not found.");
+      }
+
+      if (order.payment_stat === true) {
+        // Already processed by success_url
+        console.log("IPN: Payment already processed by success URL.");
+        return res.status(200).send("Already processed.");
+      }
+
+      // Safe fallback update
+      order.payment_stat = true;
+
+      // Update stock & ordered quantity
+      for (const item of order.items) {
+        const { category, _id, size, quantity } = item;
+        const categoryDoc = await Cloth.findOne({ category });
+        if (!categoryDoc) continue;
+
+        const clothingItem = categoryDoc.items.id(_id);
+        if (!clothingItem || !clothingItem.size || !clothingItem.size.has(size)) continue;
+
+        const currentQty = clothingItem.size.get(size);
+        clothingItem.size.set(size, Math.max(0, currentQty - quantity));
+        clothingItem.ordered = (clothingItem.ordered || 0) + quantity;
+
+        await categoryDoc.save();
+      }
+
+      // Re-send confirmation email (idempotent)
+      const htmlContent = generateEmailHtml(
+        order.firstName,
+        "Your order has been confirmed!",
+        order.items,
+        order.phoneNumber,
+        order.address,
+        order.order_stat,
+        order.delivery,
+        order.total,
+        order.transaction_id,
       );
+
+      try {
+        await axios.post(`${backend}mail`, {
+          subject: "Order Confirmation",
+          htmlContent,
+          email: order.email,
+          message: `Order ${order.transaction_id} has been confirmed.`,
+        });
+      } catch (mailErr) {
+        console.error("IPN: Email sending failed:", mailErr.message);
+      }
+
+      await order.save();
 
       return res.status(200).send("IPN processed successfully.");
     }
@@ -246,7 +296,6 @@ orderRouter.route('/ipn')
     res.status(500).send("Server error while handling IPN");
   }
 });
-
 
 orderRouter.route('/colmplete/:tranId')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
